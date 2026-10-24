@@ -1,0 +1,199 @@
+-- Azi Follow & Orbit UI | Random Target
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local LP = Players.LocalPlayer
+local PG = LP:WaitForChild("PlayerGui")
+
+local activeTarget = nil
+local activeMode = nil
+local orbitAngle = 0
+
+-- ─── UI SETUP ─────────────────────────────────────────────
+local sg = Instance.new("ScreenGui")
+sg.Name = "AziFollowOrbit"
+sg.ResetOnSpawn = false
+sg.Parent = PG
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 220, 0, 140)
+main.Position = UDim2.new(0.5, -110, 0.5, -70)
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+main.BorderSizePixel = 0
+main.Active = true
+main.Parent = sg
+local mc = Instance.new("UICorner"); mc.CornerRadius = UDim.new(0, 8); mc.Parent = main
+local ms = Instance.new("UIStroke"); ms.Color = Color3.fromRGB(150, 0, 0); ms.Thickness = 2; ms.Parent = main
+
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 30)
+topBar.BackgroundColor3 = Color3.fromRGB(20, 20, 22)
+topBar.BorderSizePixel = 0
+topBar.Parent = main
+local tc = Instance.new("UICorner"); tc.CornerRadius = UDim.new(0, 8); tc.Parent = topBar
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 1, 0); title.Position = UDim2.new(0, 10, 0, 0)
+title.BackgroundTransparency = 1; title.Text = "Follow / Orbit (Random)"
+title.TextColor3 = Color3.fromRGB(255, 255, 255); title.Font = Enum.Font.GothamBold
+title.TextSize = 13; title.TextXAlignment = Enum.TextXAlignment.Left; title.Parent = topBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 20, 0, 20); closeBtn.Position = UDim2.new(1, -25, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0); closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255); closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 10; closeBtn.Parent = topBar
+local cc = Instance.new("UICorner"); cc.CornerRadius = UDim.new(0, 4); cc.Parent = closeBtn
+closeBtn.MouseButton1Click:Connect(function() 
+    main.Visible = false 
+    activeTarget = nil
+    activeMode = nil
+end)
+
+-- Status
+local statusLbl = Instance.new("TextLabel")
+statusLbl.Size = UDim2.new(1, -20, 0, 15); statusLbl.Position = UDim2.new(0, 10, 0, 35)
+statusLbl.BackgroundTransparency = 1; statusLbl.Text = "Target: None"
+statusLbl.TextColor3 = Color3.fromRGB(150, 150, 150); statusLbl.Font = Enum.Font.Gotham
+statusLbl.TextSize = 10; statusLbl.TextXAlignment = Enum.TextXAlignment.Left; statusLbl.Parent = main
+
+-- Follow Button
+local followBtn = Instance.new("TextButton")
+followBtn.Size = UDim2.new(1, -20, 0, 35); followBtn.Position = UDim2.new(0, 10, 0, 55)
+followBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35); followBtn.Text = "FOLLOW RANDOM"
+followBtn.TextColor3 = Color3.fromRGB(255, 255, 255); followBtn.Font = Enum.Font.GothamBold
+followBtn.TextSize = 12; followBtn.Parent = main
+local fbc = Instance.new("UICorner"); fbc.CornerRadius = UDim.new(0, 6); fbc.Parent = followBtn
+
+-- Orbit Button
+local orbitBtn = Instance.new("TextButton")
+orbitBtn.Size = UDim2.new(1, -20, 0, 35); orbitBtn.Position = UDim2.new(0, 10, 0, 95)
+orbitBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35); orbitBtn.Text = "ORBIT RANDOM"
+orbitBtn.TextColor3 = Color3.fromRGB(255, 255, 255); orbitBtn.Font = Enum.Font.GothamBold
+orbitBtn.TextSize = 12; orbitBtn.Parent = main
+local obc = Instance.new("UICorner"); obc.CornerRadius = UDim.new(0, 6); obc.Parent = orbitBtn
+
+-- ─── RANDOM PLAYER FUNCTION ───────────────────────────────
+local function getRandomPlayer()
+    local validPlayers = {}
+    
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LP and plr.Character then
+            local vHrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            local vHum = plr.Character:FindFirstChildOfClass("Humanoid")
+            if vHrp and vHum and vHum.Health > 0 then
+                table.insert(validPlayers, plr)
+            end
+        end
+    end
+    
+    if #validPlayers > 0 then
+        return validPlayers[math.random(1, #validPlayers)]
+    end
+    return nil
+end
+
+-- ─── BUTTON LOGIC ─────────────────────────────────────────
+followBtn.MouseButton1Click:Connect(function()
+    if activeMode == "Follow" then
+        activeTarget = nil
+        activeMode = nil
+        followBtn.Text = "FOLLOW RANDOM"
+        followBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        statusLbl.Text = "Target: None"
+    else
+        local target = getRandomPlayer()
+        if target then
+            activeTarget = target
+            activeMode = "Follow"
+            followBtn.Text = "STOP FOLLOWING"
+            followBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+            orbitBtn.Text = "ORBIT RANDOM"
+            orbitBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+            statusLbl.Text = "Target: " .. target.Name
+        else
+            statusLbl.Text = "No players found!"
+        end
+    end
+end)
+
+orbitBtn.MouseButton1Click:Connect(function()
+    if activeMode == "Orbit" then
+        activeTarget = nil
+        activeMode = nil
+        orbitBtn.Text = "ORBIT RANDOM"
+        orbitBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        statusLbl.Text = "Target: None"
+    else
+        local target = getRandomPlayer()
+        if target then
+            activeTarget = target
+            activeMode = "Orbit"
+            orbitAngle = 0
+            orbitBtn.Text = "STOP ORBITING"
+            orbitBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+            followBtn.Text = "FOLLOW RANDOM"
+            followBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+            statusLbl.Text = "Target: " .. target.Name
+        else
+            statusLbl.Text = "No players found!"
+        end
+    end
+end)
+
+-- ─── MAIN LOOP ────────────────────────────────────────────
+RunService.Heartbeat:Connect(function()
+    if not activeTarget or not activeMode then return end
+    
+    local myChar = LP.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myHrp then return end
+    
+    local targetChar = activeTarget.Character
+    local targetHrp = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+    
+    -- If target dies or leaves, pick a new random one automatically
+    if not targetHrp or targetChar.Humanoid.Health <= 0 then
+        local newTarget = getRandomPlayer()
+        if newTarget then
+            activeTarget = newTarget
+            statusLbl.Text = "Target: " .. newTarget.Name .. " (Switched)"
+        else
+            activeTarget = nil
+            activeMode = nil
+            followBtn.Text = "FOLLOW RANDOM"
+            followBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+            orbitBtn.Text = "ORBIT RANDOM"
+            orbitBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+            statusLbl.Text = "Target: Lost"
+            return
+        end
+        return
+    end
+
+    if activeMode == "Follow" then
+        myHrp.CFrame = targetHrp.CFrame
+    elseif activeMode == "Orbit" then
+        orbitAngle = orbitAngle + math.rad(15)
+        local radius = 6
+        local offset = Vector3.new(math.cos(orbitAngle) * radius, 0, math.sin(orbitAngle) * radius)
+        myHrp.CFrame = CFrame.new(targetHrp.Position + offset)
+    end
+end)
+
+-- ─── DRAG LOGIC ───────────────────────────────────────────
+local dragging, dragStart, startPos
+topBar.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; dragStart = i.Position; startPos = main.Position
+    end
+end)
+UIS.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end
+end)
+UIS.InputChanged:Connect(function(i)
+    if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local d = i.Position - dragStart
+        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+    end
+end)
